@@ -2,40 +2,66 @@ import React, { Component } from 'react';
 import Webcam from "react-webcam";
 
 export default class Camara extends Component {
-  setRef = webcam => {
-    this.webcam = webcam;
-  };
-
-  state = {
-    imagen: null
-  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      imagen: null,
+      mostrarCamara: true // Estado para mostrar u ocultar la cámara
+    };
+    this.webcam = React.createRef();
+  }
 
   foto = () => {
-    const captura = this.webcam.getScreenshot();
+    const captura = this.webcam.current.getScreenshot();
     console.log(captura);
     this.setState({
       imagen: captura
     });
   };
 
+  cerrarCamara = () => {
+    // Obtiene los tracks activos y los detiene
+    if (this.webcam.current && this.webcam.current.stream) {
+      const tracks = this.webcam.current.stream.getTracks();
+      tracks.forEach((track) => track.stop());
+    }
+    this.setState({ mostrarCamara: false });
+  };
+
+  abrirCamara = () => {
+    this.setState({ mostrarCamara: true });
+  };
+
   render() {
-    // Configuración para usar la cámara trasera
     const videoConstraints = {
-      facingMode:  "environment"  // Selecciona la cámara trasera
+      facingMode: "environment" // Configura la cámara trasera
     };
 
     return (
       <div className='App'>
-        <Webcam
-          audio={false}
-          height={350}
-          ref={this.setRef}
-          screenshotFormat="image/jpeg"
-          width={350}
-          videoConstraints={videoConstraints} // Aplica los constraints
-        />
-        <br />
-        <button onClick={this.foto}>Hacer captura</button>
+        {this.state.mostrarCamara ? (
+          <div>
+            <Webcam
+              audio={false}
+              height={350}
+              ref={this.webcam}
+              screenshotFormat="image/jpeg"
+              width={350}
+              videoConstraints={videoConstraints}
+              onUserMedia={(stream) => {
+                this.webcam.current.stream = stream; // Guarda la referencia del stream
+              }}
+            />
+            <br />
+            <button onClick={this.foto}>Hacer captura</button>
+            <button onClick={this.cerrarCamara}>Cerrar cámara</button>
+          </div>
+        ) : (
+          <div>
+            <p>La cámara está cerrada.</p>
+            <button onClick={this.abrirCamara}>Abrir cámara</button>
+          </div>
+        )}
         <hr />
         {this.state.imagen && (
           <>
@@ -48,3 +74,5 @@ export default class Camara extends Component {
     );
   }
 }
+
+
